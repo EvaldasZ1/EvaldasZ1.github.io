@@ -1,0 +1,225 @@
+<html>
+<head>
+    <title>Good Pulse Oxymeter</title>
+    <script src="script.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+<body onload="Init()">
+    <h1>Using myDAQ to make pulse oximeter</h1>
+    <table class="Selection">
+        <tr>
+            <td onclick="Change('intro')">
+                <span>Introduction</span>
+            </td>
+            <td onclick="Change('phy')">
+                <span>Physical Setup</span>
+            </td>
+            <td onclick="Change('code')">
+                <span>Code</span>
+            </td>
+            <td onclick="Change('res')">
+                <span>My Results</span>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section intro">
+        <h2>Introduction</h2>
+        <p>
+            Recently I've been experimenting with a myDAQ system using LABVIEW. Using both of these instruments allows for a very simple DIY setup.
+            Whilst the visual programming style is often a hassle for a programmer (like myself) it's more intuitive for people with 0 coding experience and allows for
+            an easy controls setup for fine tuning the circuit at hand. It's a system that is very much plug and go since one does not have to worry about drivers or compatibility so it's perfect if you come up with an experiment in the morning and want to do it in the afternoon.
+        </p>
+        <p>
+            In this web page, I'll take you through what I've learned while trying to make my DIY pulse oximeter.
+            I'll make everything as brief as possible from now since no one wants to spend reading more than an hour just to get some quick points.
+        </p>
+        <p>
+            P.S. This will not cover blood oxygenation models, only the technical quirks of building DIY oximeter using myDAQ and LabView.
+        </p>
+        <p style="text-align:center;">
+            <img src="logo.jpg">
+        </p>
+    </div>
+
+    <div class="section phy">
+        <h2>Physical setup</h2>
+        <p>
+            Here's what I've used:
+            <ul>
+                <li>myDAQ</li>
+                <li>Breadboard</li>
+                <li>OP AMP</li>
+                <li>Red LED</li>
+                <li>IR LED</li>
+                <li>Photodiode</li>
+                <li>Wires</li>
+            </ul>
+        </p>
+        <p>
+            And here are few things to keep in mind:
+            <ol>
+                <li>Check if photodiode or LEDS are connected the correct way. If not it might produce negative voltages, or not work at all.</li>
+                <li>OP AMP is only used due to limitations of myDAQ. It cannot produce the necessary voltage itself. OP AMP works by taking the difference of two inputs and amplifying it.</li>
+                <li>Background light is not that big of a deal. In my experiment, the ambient light sources were only a few parts in a thousand when compared to the signal. The Signal variation due to blood flow was around 2-4%.</li>
+                <li>
+                    Finger moving the connections is by far the most contributing factor of error.
+                    The green outline shows that problem.
+                </li>
+            </ol>
+        </p>
+
+        <p style="text-align:center;">
+            <img src="CS1.bmp">
+        </p>
+        <p style="text-align:center;">
+            <img src="RS1.bmp">
+        </p>
+        <h3>Here's something to try out to fix the movement of the electrical connections.</h3>
+        <p style="text-align:center;">
+            <img src="MI.png" height="300" width="800">
+        </p>
+    </div>
+
+    <div class="section code">
+        <h2>Code</h2>
+        <p>
+            Here I'll take you through the code I've used, what does it do and what should be improved.
+        </p>
+
+        <h3>Data Acquisition</h3>
+        <p style="text-align:center;" class="imageContainer">
+            <img src="C0.png">
+        </p>
+        <ul>
+            <li>
+                <p>
+                    You will be varying frequency of the pulses and their on/off time. The shorter and more frequent the pulses the better. The limiting factors are how fast myDAQ and OP-AMP can alternate the LEDs and the method used for finding the peaks and differentiating them. Frequency of 30 and duty cycle of 25%
+                    worked the best for me.
+                </p>
+            </li>
+            <li>
+                <p>
+                    The signals must be combined before sending them to a myDAQ driver. There can only be 1 myDAQ assistant per myDAQ. Thus making two myDAQ assistants (one for each channel) will result in an error.
+                </p>
+            </li>
+            <li>
+                <p>
+                    Because I use the same sampling info for the driver and photodiode the number of samples and peak locations match. This allows for easy Red/Infrared separation later.
+                </p>
+            </li>
+            <li>
+                <p>
+                    I've multiplied the generated waveforms by the detector data. This is an easy way of separating the data into Red and Infrared peaks. When the LED is not on it gets multiplied
+                    by the 0s in generated signal.
+                </p>
+            </li>
+        </ul>
+
+        <h3>Filtering</h3>
+        <p style="text-align:center;" class="imageContainer">
+            <img src="C1.png">
+        </p>
+        <ul>
+            <li>
+                <p>
+                    Firstly one has to choose what kind of filter to use. It might be tempting to use Express Filter VI, however here are a few problems with it. Firstly, it messes up the amplitude.
+                    In theory, Butterworth filter should be simply an FFT Bandpass with a gradual falloff rather than an instant one. However, I've found that in LabView my configurations for that filter produced a "ramp up" in a RECONSTRUCTED signal. This is probably a consequence of an optimised algorithm and not a big deal in long data series, however, in my case this was one of the reasons I chose to write my own filter. If you got more ideas, try making a square signal (like the one sent to detectors) add saw waveform and some noise and try to use different filters to see which consistently produces the initial saw amplitude.
+                </p>
+            </li>
+            <li>
+                <p>
+                    Due to the same reasons as the point above, try to allow more of the higher frequencies in a bandpass filter. This will ensure that the amplitude of a reconstructed signal will not lose its amplitude due to filtering.
+                </p>
+            </li>
+            <li>
+                <p>
+                    In LabView, FFT filter does not get rid of the mirroring effect. Thus simply cut out the last half of the FFT result and multiply the first one by 2.
+                </p>
+            </li>
+            <li>
+                <p>
+                    FFT also does not have a defined X axis. Thus the delta in frequency is sampling_frequency/(2*num_samples)*i where i goes from 0 to num_samples. From this definition one cab also see that the bigger the number of samples or the lower the sampling frequency the better resolution of the FFT. I've used 10k samples at a 1k sampling frequency. Thus the FFT resolution in my case is 0.05Hz.
+                </p>
+            </li>
+            <li>
+                <p>
+                    You also see that I take the magnitude of the iFFT results before graphing. Waveform does not do that automatically, thus without doing it, one would probably get multiple graphs.
+                </p>
+            </li>
+            <li>
+                <p>
+                    As some might notice, the data that goes into the FFT is comprised of periodic square spikes, rather than a continuous graph. This is not a big problem as the frequencies that make up the spikes are primarily much higher than the ~1-2Hz range that we're looking for.
+                </p>
+            </li>
+        </ul>
+
+        <h3>Further Data Processing</h3>
+        <p style="text-align:center;" class="imageContainer">
+            <img src="C3.png">
+        </p>
+        <ul>
+            <li>
+                <p>
+                    The models used for transforming the red/infrared ratios to oxygenation are quite complex.
+                    Thus I've used a simple data lookup table. NOTE: To improve the results interpolation should be used rather than the rounding of the values.
+                </p>
+            </li>
+            <li>
+                <p>
+                    You can see that the value of 0.001 is used for peak threshold. This should be calibrated for each setup separately since it depends on the intensity measured from the photodiode.
+                </p>
+            </li>
+            <li>
+                <p>
+                    The way I calculate the DC component is to multiply the peak values by 2. This is not a proper way of doing it. One should subtract the average peak value from average valley value.
+                </p>
+            </li>
+            <li>
+                <p>
+                    Finally, there's a beginning of a peak matching system. The red and infrared peaks must match according to the model. This is a way to detect the fake peaks. Because quite a few peaks are taken in the 10s sampling period we can allow for few of them to be discarded and to still detect the oxygenation. Thus if the red and infrared peak locations are not withing a certain threshold they should not be used when taking oxygenation measurement.
+                </p>
+            </li>
+        </ul>
+
+
+        <h3>Advanced Improvements</h3>
+        <ul>
+            <li>
+                <p>
+                    One thing that a commercial oximeter should do is to detect when there is no pulse coming in. Thus the FFT amplitude of the correct range should be within a threshold, or else it should print an error.
+                </p>
+            </li>
+            <li>
+                <p>
+                    A commercial oximeter should also be quick to update. The oximeter in this example might take 10 heartbeats to update, whereas during a surgery every second matter.
+                    It should be taking samples until a heartbeat is detected, then send it to SpO2 processing. This way the data will occupy a consistent window of a heartbeat to heartbeat.
+                </p>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section res">
+        <h2>Results</h2>
+        <p>
+            Knowing this you won't have to be lucky to get meaningful results. Tip: The telltale sign that your Oximeter works is the consistent matching of the peaks in the cleaned up signal. As you can see mine works sometimes. The following data results in blood oxygenation of 100% and BPM of 72.
+        </p>
+        <p style="text-align:center;">
+            <img src="FFT0.bmp">
+        </p>
+        <p style="text-align:center;">
+            <img src="CS0.bmp">
+        </p>
+    </div>
+
+</body>
+
+</html>
