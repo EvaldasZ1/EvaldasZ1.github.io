@@ -68,11 +68,11 @@
         <p>
             And here are few things to keep in mind:
             <ol>
-                <li>Check if photodiode or LEDS are connected the correct way. If not it might produce negative voltages, or not work at all.</li>
-                <li>OP AMP is only used due to limitations of myDAQ. It cannot produce the necessary voltage itself. OP AMP works by taking the difference of two inputs and amplifying it.</li>
-                <li>Background light is not that big of a deal. In my experiment, the ambient light sources were only a few parts in a thousand when compared to the signal. The Signal variation due to blood flow was around 2-4%.</li>
+                <li>Check if a photodiode and the LEDs are connected the correct way. If not it might produce negative voltages, or not work at all.</li>
+                <li>OP AMP is only used due to limitations of myDAQ, since it cannot produce the necessary voltage by itself. OP AMP works by taking the difference of two inputs and amplifying it.</li>
+                <li>Background light is not that big of a deal. In my experiment, the ambient light sources were only few parts in a thousand when compared to the signal. The Signal variation due to blood flow was around 2-4%.</li>
                 <li>
-                    Finger moving the connections is by far the most contributing factor of error.
+                    Finger moving the connections was by far the most contributing factor of error.
                     The green outline shows that problem.
                 </li>
             </ol>
@@ -93,7 +93,7 @@
     <div class="section code">
         <h2>Code</h2>
         <p>
-            Here I'll take you through the code I've used, what does it do and what should be improved.
+            Here I'll take you through the code I've used, what it does and what should be improved.
         </p>
 
         <h3>Data Acquisition</h3>
@@ -103,7 +103,7 @@
         <ul>
             <li>
                 <p>
-                    You will be varying frequency of the pulses and their on/off time. The shorter and more frequent the pulses the better. The limiting factors are how fast myDAQ and OP-AMP can alternate the LEDs and the method used for finding the peaks and differentiating them. Frequency of 30 and duty cycle of 25%
+                    You will be varying frequency of the pulses and their on/off (duty) time. The shorter and more frequent the pulses the better. The limiting factors are how fast myDAQ and OP-AMP can alternate the LEDs and the method used for finding the peaks and differentiating them. Frequency of 30 and duty cycle of 25%
                     worked the best for me.
                 </p>
             </li>
